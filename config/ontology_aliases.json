@@ -1,0 +1,8 @@
+{
+  "discount": ["rebate", "price reduction", "markdown"],
+  "quote": ["quotation", "proposal"],
+  "opportunity": ["deal", "pipeline item"],
+  "win rate": ["conversion rate", "closure rate"],
+  "revenue": ["sales", "turnover"],
+  "customer": ["client", "account"]
+}

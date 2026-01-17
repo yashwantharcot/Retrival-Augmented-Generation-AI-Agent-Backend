@@ -1,0 +1,38 @@
+# Ignore Python virtual environment folder
+/ddagent_env/
+/doc/
+# Ignore environment variable file
+.env
+
+# Ignore model weights or version folders
+1.10.0/
+4.30.0/
+0.3.5/
+
+# Ignore Python cache folders
+__pycache__/
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+*.pyd
+
+# VS Code settings (if you use VS Code)
+.vscode/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+/ddagent_env/
+/__pycache__/
+/*.pt
+/*.bin
+/*.pkl
+/.env
+*.log
+.ipynb_checkpoints/
+*.tar.gz
+*.h5
+*.onnx
+development.bfg-report/
+
+*.pdf
+*.txt

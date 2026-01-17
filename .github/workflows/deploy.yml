@@ -1,0 +1,61 @@
+name: Deploy to VPS Server
+
+on:
+  push:
+    branches: [ Production ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -p "${SSH_PORT}" -H "${SSH_HOST}" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Verify SSH connection (verbose)
+        run: |
+          set -x
+          ssh -vvv -o StrictHostKeyChecking=yes -o ConnectTimeout=30 -p "${SSH_PORT}" \
+            "${SSH_USER}@${SSH_HOST}" "echo 'SSH OK as $(whoami)'"
+
+      - name: Deploy to server
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB: ${{ secrets.MONGODB_DB }}
+          MONGODB_COLLECTION: ${{ secrets.MONGODB_COLLECTION }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          PDFCO_API_KEY: ${{ secrets.PDFCO_API_KEY }}
+        run: |
+          ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=30 -p "${SSH_PORT}" \
+            "${SSH_USER}@${SSH_HOST}" \
+            "OPENAI_API_KEY='${OPENAI_API_KEY}' \
+             MONGODB_URI='${MONGODB_URI}' \
+             MONGODB_DB='${MONGODB_DB}' \
+             MONGODB_COLLECTION='${MONGODB_COLLECTION}' \
+             GOOGLE_API_KEY='${GOOGLE_API_KEY}' \
+             GROQ_API_KEY='${GROQ_API_KEY}' \
+             YOUTUBE_API_KEY='${YOUTUBE_API_KEY}' \
+             SERPAPI_API_KEY='${SERPAPI_API_KEY}' \
+             TAVILY_API_KEY='${TAVILY_API_KEY}' \
+             PDFCO_API_KEY='${PDFCO_API_KEY}' \
+             bash /root/DealdoxAgent_DEVQA/deploy.sh"

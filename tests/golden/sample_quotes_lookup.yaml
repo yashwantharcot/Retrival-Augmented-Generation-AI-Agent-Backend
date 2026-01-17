@@ -1,0 +1,12 @@
+- id: lookup_quote_status
+  query: "status of quote QT001245"
+  intent: ENTITY_LOOKUP
+  expected_docs: ["QT001245"]
+  expected_answer_contains: ["status", "quote"]
+  k: 10
+- id: agg_discount_last_qtr
+  query: "total discount last quarter"
+  intent: AGGREGATION
+  expected_docs: ["QT001245","QT001300"]
+  expected_answer_contains: ["discount"]
+  k: 15
