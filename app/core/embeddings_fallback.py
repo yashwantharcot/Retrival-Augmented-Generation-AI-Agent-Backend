@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - optional import
     g_exceptions = None
 USE_OPENAI = os.getenv("USE_OPENAI", "true").lower() == "true"
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# OpenAI client is initialized properly below near line 83
 # ===== CONFIGURATION =====
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
