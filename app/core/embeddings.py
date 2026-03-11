@@ -53,7 +53,7 @@ def count_tokens(text: str) -> int:
 SEARCH_FALLBACKS = (
     [("openai", EMBEDDING_MODEL)] if USE_OPENAI else []
 ) + [
-    ("gemini", "models/text-embedding-004"),
+    ("gemini", "text-embedding-004"),
 ]
 # ===== STATE =====
 openai_lock = Lock()

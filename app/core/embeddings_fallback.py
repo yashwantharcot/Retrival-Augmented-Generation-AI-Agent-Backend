@@ -285,7 +285,7 @@ def get_query_embedding(query: str) -> List[float]:
     
     last_error = None
     import traceback
-    providers = [("openai", EMBEDDING_MODEL), ("gemini", "models/text-embedding-004")]
+    providers = [("openai", EMBEDDING_MODEL), ("gemini", "text-embedding-004")]
     if not E5_EFFECTIVE_DISABLED:
         providers.append(("intfloat", E5_MODEL_NAME))
     for provider, model in providers:
@@ -382,7 +382,7 @@ def watch_collection(collection: collection.Collection) -> None:
                             logger.error("[Watcher] Google GenAI client not initialized")
                             continue
                         emb_result = google_client.models.embed_content(
-                            model="models/text-embedding-004", 
+                            model="text-embedding-004", 
                             contents=text
                         )
                         emb = emb_result.embeddings[0].values
