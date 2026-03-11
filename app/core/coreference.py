@@ -16,7 +16,7 @@ from app.core.embeddings import get_query_embedding
 try:
     from google import genai
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-    google_client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
+    google_client = genai.Client(api_key=GOOGLE_API_KEY, http_options={"api_version": "v1"}) if GOOGLE_API_KEY else None
 except ImportError:
     google_client = None
 # ...existing code...
