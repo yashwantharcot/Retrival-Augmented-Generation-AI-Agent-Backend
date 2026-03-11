@@ -13,19 +13,28 @@ def get_user_profile(user_id):
 from pymongo import MongoClient
 from datetime import datetime
 from app.config import MONGO_URI, DB_NAME, TARGET_COLLECTION, SOURCE_COLLECTIONS
+import os
+from bson.objectid import ObjectId
 
-# === Setup MongoDB Connection ===
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-target_col = db[TARGET_COLLECTION]
-source_cols = [db[name] for name in SOURCE_COLLECTIONS]
+# Consolidate MongoDB setup
+# Initialize client globally once
+client = MongoClient(os.getenv("MONGODB_URI") or MONGO_URI)
+
+MONGODB_DB = os.getenv("MONGODB_DB") or DB_NAME or "dev_db"
+MONGODB_COLLECTION = os.getenv("MONGODB_COLLECTION") or TARGET_COLLECTION or "documents"
+
+db = client[MONGODB_DB]
+collection = db[MONGODB_COLLECTION] # This will be the default collection for general operations
+target_col = db.get_collection(TARGET_COLLECTION) if TARGET_COLLECTION else collection
+source_cols = [db[name] for name in SOURCE_COLLECTIONS] if SOURCE_COLLECTIONS else []
 history_col = db["query_history"]
 memory_collection = db["dd_memory_entries_rag"]
 conversation_col = db["conversation_history"]
 
 class MongoHandler:
     def __init__(self, uri=MONGO_URI, db_name=DB_NAME):
-        self.client = MongoClient(uri)
+        # Use the global client if available, otherwise create a new one
+        self.client = client if 'client' in globals() else MongoClient(uri)
         self.db = self.client[db_name]
 
     # === Generic CRUD ===
@@ -101,17 +110,6 @@ def get_last_query(session_id):
     
     return mongo_handler.get_last_query(session_id)
 
-
-# app/db/mongo.py
-
-from pymongo import MongoClient
-from datetime import datetime
-import os
-
-# initialize client (you can refactor to singleton if you already have one globally)
-client = MongoClient(os.getenv("MONGODB_URI"))
-db = client[os.getenv("MONGODB_DB")]
-collection = db[os.getenv("MONGODB_COLLECTION")]  # e.g. "documents"
 
 def get_documents_modified_since(cutoff_time: datetime):
     """
