@@ -242,7 +242,7 @@ Output:
 
 # Try paid OpenAI models *only if USE_OPENAI=true*
     response_text = None
-    if USE_OPENAI:
+    if USE_OPENAI and openai_client:
         for model_name in paid_models:
             try:
                 response = openai_client.chat.completions.create(

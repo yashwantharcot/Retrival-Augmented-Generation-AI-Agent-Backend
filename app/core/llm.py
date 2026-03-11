@@ -92,16 +92,19 @@ class OpenAIEngine:
         if USE_OPENAI:
             for model_name in paid_models:
                 try:
-                    response = self.client.chat.completions.create(
-                        model=model_name,
-                        messages=[
-                            {"role": "system", "content": "You are a knowledgeable assistant."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.2
-                    )
-                    response_text = response.choices[0].message.content.strip()
-                    break
+                    if self.client:
+                        response = self.client.chat.completions.create(
+                            model=model_name,
+                            messages=[
+                                {"role": "system", "content": "You are a knowledgeable assistant."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.2
+                        )
+                        response_text = response.choices[0].message.content.strip()
+                        break
+                    else:
+                        print(f"Skipping paid model {model_name} (OpenAI client not initialized)")
                 except Exception as e:
                     print(f"Paid model {model_name} failed: {e}")
                     error_type = str(e).lower()
@@ -111,16 +114,20 @@ class OpenAIEngine:
                 try:
                     if fm["provider"] == "groq":
                         from groq import Groq
-                        groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-                        resp = groq_client.chat.completions.create(
-                            model=fm["model"],
-                            messages=[
-                                {"role": "system", "content": "You are a knowledgeable assistant."},
-                                {"role": "user", "content": prompt}
-                            ],
-                            temperature=0.2
-                        )
-                        response_text = resp.choices[0].message.content.strip()
+                        groq_key = os.getenv("GROQ_API_KEY")
+                        if groq_key:
+                            groq_client = Groq(api_key=groq_key)
+                            resp = groq_client.chat.completions.create(
+                                model=fm["model"],
+                                messages=[
+                                    {"role": "system", "content": "You are a knowledgeable assistant."},
+                                    {"role": "user", "content": prompt}
+                                ],
+                                temperature=0.2
+                            )
+                            response_text = resp.choices[0].message.content.strip()
+                        else:
+                            print(f"Skipping Groq model {fm['model']} (API key missing)")
                     elif fm["provider"] == "google":
                         import google.generativeai as genai
                         genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -156,16 +163,19 @@ class OpenAIEngine:
         if USE_OPENAI:
             for model_name in paid_models:
                 try:
-                    response = self.client.chat.completions.create(
-                        model=model_name,
-                        messages=[
-                            {"role": "system", "content": "You are a knowledgeable assistant."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.2
-                    )
-                    response_text = response.choices[0].message.content.strip()
-                    break
+                    if self.client:
+                        response = self.client.chat.completions.create(
+                            model=model_name,
+                            messages=[
+                                {"role": "system", "content": "You are a knowledgeable assistant."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.2
+                        )
+                        response_text = response.choices[0].message.content.strip()
+                        break
+                    else:
+                        print(f"Skipping paid model {model_name} (OpenAI client not initialized)")
                 except Exception as e:
                     print(f"Paid model {model_name} failed: {e}")
                     error_type = str(e).lower()
@@ -175,16 +185,20 @@ class OpenAIEngine:
                 try:
                     if fm["provider"] == "groq":
                         from groq import Groq
-                        groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-                        resp = groq_client.chat.completions.create(
-                            model=fm["model"],
-                            messages=[
-                                {"role": "system", "content": "You are a knowledgeable assistant."},
-                                {"role": "user", "content": prompt}
-                            ],
-                            temperature=0.2
-                        )
-                        response_text = resp.choices[0].message.content.strip()
+                        groq_key = os.getenv("GROQ_API_KEY")
+                        if groq_key:
+                            groq_client = Groq(api_key=groq_key)
+                            resp = groq_client.chat.completions.create(
+                                model=fm["model"],
+                                messages=[
+                                    {"role": "system", "content": "You are a knowledgeable assistant."},
+                                    {"role": "user", "content": prompt}
+                                ],
+                                temperature=0.2
+                            )
+                            response_text = resp.choices[0].message.content.strip()
+                        else:
+                            print(f"Skipping Groq model {fm['model']} (API key missing)")
                     elif fm["provider"] == "google":
                         import google.generativeai as genai
                         genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
