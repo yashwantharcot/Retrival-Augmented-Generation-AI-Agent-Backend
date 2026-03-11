@@ -10,9 +10,9 @@ from tiktoken import encoding_for_model
 import google.generativeai as genai
 import tiktoken  # For fallback encoding
 from app.config import EMBEDDING_MODEL
-from openai import OpenAI
 USE_OPENAI = os.getenv("USE_OPENAI", "false").lower() == "true"
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 # ===== API KEYS =====
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")

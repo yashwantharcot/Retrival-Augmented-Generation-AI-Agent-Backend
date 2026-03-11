@@ -16,9 +16,13 @@ SKIP_GOOGLE_FREE = os.getenv("SKIP_GOOGLE_FREE", "false").lower() == "true"
 SKIP_GROQ_FREE = os.getenv("SKIP_GROQ_FREE", "false").lower() == "true"
 
 # Clients
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-together_client = OpenAI(api_key=os.getenv("TOGETHER_API_KEY"), base_url="https://api.together.xyz/v1")
-openrouter_client = OpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url="https://openrouter.ai/api/v1")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+together_client = OpenAI(api_key=TOGETHER_API_KEY, base_url="https://api.together.xyz/v1") if TOGETHER_API_KEY else None
+openrouter_client = OpenAI(api_key=OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1") if OPENROUTER_API_KEY else None
 
 # Control prompt logging verbosity via env
 LOG_FULL_PROMPT = os.getenv("LOG_FULL_PROMPT", "false").lower() == "true"
