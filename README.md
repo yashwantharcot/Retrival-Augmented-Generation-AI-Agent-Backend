@@ -74,7 +74,14 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ---
 
-## 📝 Current Project Status
+## �️ Future Roadmap: The "Domain Search" Initiative
+While this repository started as a general-purpose RAG backend, the next phase of this project is a specialized initiative:
+- **Domain-Specific Datasets**: We are planning to integrate high-value datasets from specific industries (e.g., Medical, Legal, or Technical docs).
+- **Pre-computed Embeddings**: The core search logic is already built and tested. The next step is simply processing these datasets into a vector database to provide a "Turn-key" search experience for specialized knowledge.
+
+---
+
+## �📝 Current Project Status
 - **Active Migration Complete**: Transitioned from `google-generativeai` to the modern `google-genai` SDK.
 - **Robustness**: Implemented fallback chains for embeddings to ensure high availability across environments (Local vs Railway).
 - **Optimization**: Removed heavy local torch/transformers dependencies for lightweight cloud-native operation on Railway.
