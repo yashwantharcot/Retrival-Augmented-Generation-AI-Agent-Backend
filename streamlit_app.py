@@ -1,55 +1,40 @@
 import streamlit as st
 import tempfile
 import os
-from uuid import uuid4
+import requests
+import json
 
-from app.api import pdf_qa
-from app.core import local_models
-from pdf_synopsis.pdf_vector_pipeline import extract_pdf_text
+st.set_page_config(page_title="PDF Q&A — Hosted Backend", layout="wide")
 
-st.set_page_config(page_title="PDF Q&A (Local Models)", layout="wide")
+st.title("PDF Q&A — Hosted Backend")
+st.markdown("Upload a PDF and have the backend (FastAPI) process it. Configure `BACKEND_URL` via environment variable if needed.")
 
-st.title("PDF Q&A — Local Models (CPU)")
-st.markdown("Upload a PDF, it will be processed locally (sentence-transformers + flan-t5-small). CPU-only supported.")
+# Backend URL (default to localhost for local dev)
+BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8000')
 
 uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 if uploaded_file is not None:
     if st.button("Process PDF"):
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            tmp.write(uploaded_file.read())
-            tmp_path = tmp.name
-
+        files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
         try:
-            text = extract_pdf_text(tmp_path)
+            resp = requests.post(f"{BACKEND_URL}/upload_pdf", files=files)
         except Exception as e:
-            st.error(f"Failed to extract PDF text: {e}")
-            os.unlink(tmp_path)
-        else:
-            os.unlink(tmp_path)
-            chunks = pdf_qa.chunk_text_simple(text)
-            if not chunks:
-                st.error("No text extracted from PDF")
-            else:
-                embeddings = local_models.embed_texts(chunks)
-                index, arr = local_models.build_faiss_index(embeddings)
-                sid = str(uuid4())
-                pdf_qa.pdf_sessions[sid] = {
-                    'chunks': chunks,
-                    'embeddings': embeddings,
-                    'index': index,
-                    'arr': arr
-                }
-                st.success(f"PDF processed. Session id: {sid}")
-                st.write(f"Chunks: {len(chunks)}")
+            st.error(f"Upload failed: {e}")
+            raise
 
-st.sidebar.header("Sessions")
-session_keys = list(pdf_qa.pdf_sessions.keys())
-selected = None
-if session_keys:
-    selected = st.sidebar.selectbox("Choose session", session_keys)
-    if selected:
-        sess = pdf_qa.pdf_sessions[selected]
-        st.sidebar.write(f"Chunks: {len(sess['chunks'])}")
+        if resp.status_code != 200:
+            st.error(f"Backend error: {resp.status_code} — {resp.text}")
+        else:
+            data = resp.json()
+            sid = data.get('session_id')
+            chunks = data.get('chunks')
+            st.success(f"PDF processed. Session id: {sid}")
+            st.write(f"Chunks: {chunks}")
+
+st.sidebar.header("Session")
+selected = st.sidebar.text_input("Session id (paste from upload result)")
+if selected:
+    st.sidebar.write("Using session: ", selected)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("Tip: after uploading, choose the session here to ask questions.")
@@ -61,31 +46,25 @@ if st.button("Get Answer"):
     if not query:
         st.warning("Enter a question first")
     elif not selected:
-        st.warning("Select a session (upload a PDF first)")
+        st.warning("Provide a session id (from upload step)")
     else:
-        sess = pdf_qa.pdf_sessions[selected]
-        q_emb = local_models.embed_texts([query])[0]
-        ids, dists = local_models.search_faiss(sess['index'], sess['arr'], q_emb, top_k=top_k)
+        payload = {
+            "session_id": selected,
+            "query": query,
+            "top_k": top_k
+        }
+        try:
+            resp = requests.post(f"{BACKEND_URL}/query", json=payload)
+        except Exception as e:
+            st.error(f"Query failed: {e}")
+            raise
 
-        context_blocks = []
-        for idx in ids:
-            try:
-                context_blocks.append(sess['chunks'][int(idx)])
-            except Exception:
-                pass
-
-        prompt = "Use the following extracted document excerpts to answer the question.\n\nContext:\n"
-        for i, cb in enumerate(context_blocks):
-            prompt += f"Excerpt {i+1}: {cb}\n\n"
-        prompt += f"Question: {query}\nAnswer concisely and cite which excerpt you used (e.g., Excerpt 1)."
-
-        with st.spinner("Generating answer (may be slow on CPU)..."):
-            answer = local_models.generate_answer(prompt)
-
-        st.subheader("Answer")
-        st.write(answer)
-
-        st.subheader("Excerpts used")
-        for i, cb in enumerate(context_blocks):
-            st.write(f"Excerpt {i+1}:")
-            st.write(cb)
+        if resp.status_code != 200:
+            st.error(f"Backend error: {resp.status_code} — {resp.text}")
+        else:
+            data = resp.json()
+            st.subheader("Answer")
+            st.write(data.get('answer'))
+            st.subheader("Sources")
+            for s in data.get('sources', []):
+                st.write(s)
