@@ -12,3 +12,4 @@ google-genai
 tenacity
 groq
 PyMuPDF
+pdfplumber
