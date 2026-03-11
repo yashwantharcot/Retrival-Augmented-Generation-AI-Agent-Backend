@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 import logging
 
 # Initialize logger
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 

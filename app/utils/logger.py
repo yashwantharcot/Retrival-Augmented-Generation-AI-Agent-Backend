@@ -11,6 +11,18 @@ logging.basicConfig(
     stream=sys.stdout
 )
 
+# === Suppress noisy third-party loggers ===
+for _noisy in (
+    "pdfminer", "pdfminer.pdfpage", "pdfminer.pdfinterp",
+    "pdfminer.converter", "pdfminer.cmapdb", "pdfminer.psparser",
+    "pymongo", "pymongo.topology", "pymongo.connection",
+    "multipart", "multipart.multipart",
+    "urllib3", "urllib3.connectionpool",
+    "httpcore", "httpx",
+    "google.auth", "google.auth.transport",
+):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
+
 # === Named logger ===
 logger = logging.getLogger("rag_agent")
 
