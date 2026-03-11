@@ -65,8 +65,8 @@ def _validate_provider(provider: str):
     """Validate provider configuration before use."""
     if provider == "openai" and not openai_client:
         raise ValueError("OpenAI client not initialized")
-    if provider == "gemini" and not GOOGLE_API_KEY:
-        raise ValueError("Gemini API key not configured")
+    if provider == "gemini" and not google_client:
+        raise ValueError("Google GenAI client not initialized")
 
 def time_operation(func):
     """Decorator to log operation execution time."""

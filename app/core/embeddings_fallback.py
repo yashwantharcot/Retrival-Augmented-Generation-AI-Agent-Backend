@@ -12,7 +12,7 @@ from threading import Lock
 from tenacity import retry, stop_after_attempt, wait_exponential
 from openai import OpenAI, OpenAIError
 from tiktoken import encoding_for_model, get_encoding
-import google.generativeai as genai
+from google import genai
 from pymongo import MongoClient, collection
 from openai import OpenAI
 from app.utils.logger import logger
@@ -81,8 +81,9 @@ E5_DISABLED_REASON = (
 # ===== INITIALIZATION =====
 # API Clients
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
+google_client = None
+if genai and GOOGLE_API_KEY:
+    google_client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # MongoDB Client with connection pooling (optional)
 mongo_client = None
@@ -226,16 +227,16 @@ def _get_embedding_from_provider(provider: str, model: str, text: str) -> List[f
         global GEMINI_DISABLED
         if GEMINI_DISABLED or not USE_GEMINI_EMBEDDINGS:
             raise RuntimeError("Gemini embeddings disabled (session or config)")
-        if not GOOGLE_API_KEY:
-            raise ValueError("Gemini API key not configured")
+        if not google_client:
+            raise ValueError("Google GenAI client not initialized")
         safe_text = _sanitize_text(text)
         try:
-            result = genai.embed_content(
+            result = google_client.models.embed_content(
                 model=model,
-                content=safe_text,
-                request_options={"timeout": 10}
+                contents=safe_text,
+                config={"http_options": {"timeout": 10}}
             )
-            return result["embedding"]
+            return result.embeddings[0].values
         except Exception as e:  # capture quota and set disable
             quota_hit = False
             msg = str(e).lower()
@@ -377,11 +378,14 @@ def watch_collection(collection: collection.Collection) -> None:
                         continue
 
                     try:
-                        emb = _get_embedding_from_provider(
-                            "gemini", 
-                            "models/embedding-001", 
-                            text
+                        if not google_client:
+                            logger.error("[Watcher] Google GenAI client not initialized")
+                            continue
+                        emb_result = google_client.models.embed_content(
+                            model="models/embedding-001", 
+                            contents=text
                         )
+                        emb = emb_result.embeddings[0].values
                         store_embedding(doc_id, text, emb, "gemini")
                         logger.debug(f"[Watcher] Stored embedding for doc {doc_id}")
                     except Exception as e:

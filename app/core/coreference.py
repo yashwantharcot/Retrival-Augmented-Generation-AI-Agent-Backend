@@ -11,6 +11,14 @@ import os
 
 from app.config import LLM_MODEL
 from app.core.embeddings import get_query_embedding
+
+# Google GenAI Client
+try:
+    from google import genai
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+    google_client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
+except ImportError:
+    google_client = None
 # ...existing code...
 import os
 from dotenv import load_dotenv
@@ -279,10 +287,13 @@ Output:
                     response_text = resp.choices[0].message.content.strip()
 
                 elif fm["provider"] == "google":
-                    import google.generativeai as genai
-                    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-                    model = genai.GenerativeModel(fm["model"])
-                    resp = model.generate_content(prompt)
+                    if not google_client:
+                        print(f"Skipping Google model {fm['model']} (client not initialized)")
+                        continue
+                    resp = google_client.models.generate_content(
+                        model=fm["model"],
+                        contents=prompt
+                    )
                     response_text = resp.text.strip()
 
                 

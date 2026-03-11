@@ -24,6 +24,14 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 together_client = OpenAI(api_key=TOGETHER_API_KEY, base_url="https://api.together.xyz/v1") if TOGETHER_API_KEY else None
 openrouter_client = OpenAI(api_key=OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1") if OPENROUTER_API_KEY else None
 
+# Google GenAI Client
+try:
+    from google import genai
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+    google_client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
+except ImportError:
+    google_client = None
+
 # Control prompt logging verbosity via env
 LOG_FULL_PROMPT = os.getenv("LOG_FULL_PROMPT", "false").lower() == "true"
 LOG_PROMPT_DEBUG = os.getenv("LOG_PROMPT_DEBUG", "false").lower() == "true"  # new gate
@@ -129,10 +137,13 @@ class OpenAIEngine:
                         else:
                             print(f"Skipping Groq model {fm['model']} (API key missing)")
                     elif fm["provider"] == "google":
-                        import google.generativeai as genai
-                        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-                        model = genai.GenerativeModel(fm["model"])
-                        resp = model.generate_content(prompt)
+                        if not google_client:
+                            print(f"Skipping Google model {fm['model']} (client not initialized)")
+                            continue
+                        resp = google_client.models.generate_content(
+                            model=fm["model"],
+                            contents=prompt
+                        )
                         response_text = resp.text.strip()
                     if response_text:
                         warning_msg = (
@@ -200,10 +211,13 @@ class OpenAIEngine:
                         else:
                             print(f"Skipping Groq model {fm['model']} (API key missing)")
                     elif fm["provider"] == "google":
-                        import google.generativeai as genai
-                        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-                        model = genai.GenerativeModel(fm["model"])
-                        resp = model.generate_content(prompt)
+                        if not google_client:
+                            print(f"Skipping Google model {fm['model']} (client not initialized)")
+                            continue
+                        resp = google_client.models.generate_content(
+                            model=fm["model"],
+                            contents=prompt
+                        )
                         response_text = resp.text.strip()
                     if response_text:
                         warning_msg = (

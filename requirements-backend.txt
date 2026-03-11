@@ -8,7 +8,7 @@ openai
 pymongo
 python-dotenv
 tiktoken
-google-generativeai
+google-genai
 tenacity
 groq
 PyMuPDF
