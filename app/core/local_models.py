@@ -23,10 +23,10 @@ def _load_embed_model():
 def _load_gen_model():
     global _gen_tokenizer, _gen_model, _gen_pipeline
     if _gen_pipeline is None:
-        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
         _gen_tokenizer = AutoTokenizer.from_pretrained('google/flan-t5-small')
         _gen_model = AutoModelForSeq2SeqLM.from_pretrained('google/flan-t5-small')
-        _gen_pipeline = pipeline('text2text-generation', model=_gen_model, tokenizer=_gen_tokenizer, device=-1)
+        _gen_pipeline = True
     return _gen_pipeline
 
 
@@ -60,8 +60,16 @@ def search_faiss(index, arr, query_embedding: List[float], top_k: int = 5):
 def generate_answer(prompt: str, max_length: int = 256) -> str:
     """Generate answer using flan-t5-small via transformers pipeline."""
     with _gen_lock:
-        pipe = _load_gen_model()
-        out = pipe(prompt, max_length=max_length, do_sample=False)
-        if out and isinstance(out, list):
-            return out[0].get('generated_text', '')
-        return str(out)
+        _load_gen_model()
+        try:
+            import torch
+        except Exception:
+            raise
+        _gen_model.to('cpu')
+        inputs = _gen_tokenizer(prompt, return_tensors='pt', truncation=True)
+        input_device_inputs = {k: v.to('cpu') for k, v in inputs.items()}
+        with torch.no_grad():
+            outputs = _gen_model.generate(**input_device_inputs, max_length=max_length, do_sample=False)
+        if outputs is None or len(outputs) == 0:
+            return ''
+        return _gen_tokenizer.decode(outputs[0], skip_special_tokens=True)

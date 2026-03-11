@@ -22,6 +22,35 @@ This project includes an optional local prototype that uses free models:
 for generation (CPU-friendly). See the `streamlit_app.py` and `app/core/local_models.py`
 for the prototype implementation.
 
+## Quick Start (Windows)
+
+1. Clone the repo and open PowerShell in the project folder.
+2. Run the setup script to create a virtualenv and install dependencies (this installs
+    a CPU build of PyTorch):
+
+```powershell
+.\scripts\setup_windows.ps1
+```
+
+3. Activate the virtualenv and run the Streamlit UI:
+
+```powershell
+. .\.venv\Scripts\Activate.ps1
+streamlit run streamlit_app.py
+```
+
+## Quick Start (Unix / macOS)
+
+```bash
+./scripts/setup_unix.sh
+source .venv/bin/activate
+streamlit run streamlit_app.py
+```
+
+If you prefer not to install PyTorch via the scripts, you can manually install the
+CPU wheel using the PyTorch CPU index shown in the scripts. If any command fails,
+copy the terminal output and open an issue; I will help diagnose.
+
 # RAG AI Agent (FastAPI)
 
 ## Run Locally
