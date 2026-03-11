@@ -3,7 +3,8 @@
 /doc/
 # Ignore environment variable file
 .env
-
+/venv/
+/.venv
 # Ignore model weights or version folders
 1.10.0/
 4.30.0/

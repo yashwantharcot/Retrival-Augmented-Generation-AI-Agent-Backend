@@ -3,6 +3,25 @@
 
 A modular Retrieval-Augmented Generation (RAG).
 
+## Purpose
+
+This repository is a modular Retrieval-Augmented Generation (RAG) backend designed to
+power document-centric assistants. It provides components for:
+
+- Extracting and chunking text from PDFs and other documents.
+- Building and querying vector indexes (embeddings + FAISS).
+- A RAG pipeline that composes retrieval, memory, and LLM generation.
+- FastAPI endpoints and a simple Streamlit prototype for local PDF Q&A.
+
+Primary use-cases:
+- Ask questions over uploaded PDFs and receive grounded answers with citations.
+- Build a personal knowledge-base (KB) that can be queried conversationally.
+
+This project includes an optional local prototype that uses free models:
+`sentence-transformers/all-MiniLM-L6-v2` for embeddings and `google/flan-t5-small`
+for generation (CPU-friendly). See the `streamlit_app.py` and `app/core/local_models.py`
+for the prototype implementation.
+
 # RAG AI Agent (FastAPI)
 
 ## Run Locally
@@ -56,3 +75,29 @@ the `torch.compiler.disable` API used by `transformers`. A small no-op shim has 
 in `app/__init__.py` to make `@torch.compiler.disable` a safe no-op when missing. For a
 long-term fix, pin PyTorch to a version that includes the `compiler` API (PyTorch >= 2.1
 is typically required by newer `transformers` / `sentence-transformers`).
+
+## Current status (work paused)
+
+- Stopped active implementation work on the prototype at the user's request.
+- Current activity: resolving local environment dependency issues so the Streamlit UI
+    and local models can run. Key actions in progress or recently performed:
+    - Installing and pinning compatible packages (`torch` CPU build, `numpy<2`,
+        `transformers`, `sentence-transformers`).
+    - Fixing a malformed legacy module in `pdf_synopsis/pdf_vector_pipeline.py`.
+    - Adding a Streamlit UI (`streamlit_app.py`) and a local models helper
+        (`app/core/local_models.py`) to run embeddings and generation with free models.
+
+If you want to resume development now, run the environment setup commands in the
+project root (activate your virtualenv first):
+
+```bash
+python -m pip install --upgrade pip setuptools wheel
+pip uninstall -y torch torchvision torchaudio
+pip install --upgrade "torch==2.2.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+pip install --upgrade "torchvision==0.17.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt --upgrade
+streamlit run streamlit_app.py
+```
+
+Open an issue or message me here with the output if any command fails and I'll help
+diagnose the error.

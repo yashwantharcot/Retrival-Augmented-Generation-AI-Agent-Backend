@@ -7,6 +7,7 @@ from app.db.mongo import save_conversation
 from app.pipeline.rag_engine import RAGEngine
 from app.db.memory import insert_memory, search_similar_memories
 from app.db.mongo import memory_collection
+from app.api.pdf_qa import router as pdf_qa_router
 router = APIRouter()
 
 class RAGQueryInput(BaseModel):
@@ -99,6 +100,10 @@ async def rag_query(request: Request):
     save_conversation(session_id, original_query, query, answer)
 
     return {"query_used": query, "response": answer}
+
+
+# Mount PDF Q&A subrouter
+router.include_router(pdf_qa_router, prefix="/pdf-qa")
 
 
 
