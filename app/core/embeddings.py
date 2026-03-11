@@ -5,6 +5,11 @@ import requests
 import time
 from threading import Lock
 from functools import wraps
+from openai import OpenAI, OpenAIError
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
 try:
     from tiktoken import encoding_for_model
     import tiktoken
