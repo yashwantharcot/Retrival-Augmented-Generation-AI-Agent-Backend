@@ -7,7 +7,7 @@ from threading import Lock
 from functools import wraps
 from openai import OpenAI, OpenAIError
 try:
-    import google.generativeai as genai
+    from google import genai
 except ImportError:
     genai = None
 try:
@@ -27,8 +27,9 @@ HF_API_KEY = os.getenv("HF_API_KEY")  # HuggingFace access token
 
 # ===== CLIENT SETUP =====
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
+google_client = None
+if genai and GOOGLE_API_KEY:
+    google_client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # ===== TOKENIZER =====
 _encoding_cache = None
@@ -106,9 +107,12 @@ def _get_embedding_from_provider(provider: str, model: str, text: str) -> List[f
 
     elif provider == "gemini":
         print(f"[DEBUG] Requesting Gemini embedding for: {text}")
-        result = genai.embed_content(model=model, content=text)
+        if not google_client:
+             raise ValueError("Google GenAI client not initialized")
+        result = google_client.models.embed_content(model=model, contents=text)
         print(f"[DEBUG] Gemini embedding response: {result}")
-        return result["embedding"]
+        # The result object from new SDK has an 'embeddings' attribute which is a list
+        return result.embeddings[0].values
 
     elif provider == "huggingface":
         url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model}"

@@ -1,4 +1,7 @@
-import pdfplumber
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
 try:
     import pytesseract
 except Exception:
@@ -15,6 +18,10 @@ from typing import List
 # --- PDF to text (hybrid: selectable text + OCR fallback) ---
 def extract_pdf_text(pdf_path: str) -> str:
     text_content = ""
+    if not pdfplumber:
+        print("[WARNING] pdfplumber not installed. Cannot extract selectable text.")
+        return ""
+    
     with pdfplumber.open(pdf_path) as pdf:
         for i, page in enumerate(pdf.pages):
             try:
