@@ -6,3 +6,9 @@ requests
 numpy
 openai
 pymongo
+python-dotenv
+tiktoken
+google-generativeai
+tenacity
+groq
+PyMuPDF
