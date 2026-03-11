@@ -5,10 +5,12 @@ import requests
 import time
 from threading import Lock
 from functools import wraps
-from openai import OpenAI, OpenAIError
-from tiktoken import encoding_for_model
-import google.generativeai as genai
-import tiktoken  # For fallback encoding
+try:
+    from tiktoken import encoding_for_model
+    import tiktoken
+except ImportError:
+    encoding_for_model = None
+    tiktoken = None
 from app.config import EMBEDDING_MODEL
 USE_OPENAI = os.getenv("USE_OPENAI", "false").lower() == "true"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -28,11 +30,17 @@ _encoding_cache = None
 
 def count_tokens(text: str) -> int:
     global _encoding_cache
+    if not tiktoken:
+        # Fallback if tiktoken is missing
+        return len(text.split()) 
     if not _encoding_cache:
         try:
             _encoding_cache = encoding_for_model(EMBEDDING_MODEL)
         except Exception:
-            _encoding_cache = tiktoken.get_encoding("cl100k_base")
+            try:
+                _encoding_cache = tiktoken.get_encoding("cl100k_base")
+            except Exception:
+                return len(text.split())
     return len(_encoding_cache.encode(text))
 
 # ===== FALLBACK PROVIDERS =====

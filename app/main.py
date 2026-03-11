@@ -97,36 +97,22 @@ def health_check():
 def read_root():
     return {"message": "DealdoxAgent API is running"}
 
-from fastapi import Body
-from pydantic import BaseModel
-from typing import Optional
-from fastapi import FastAPI
-import re  # Added for regex patterns used in provider noise sanitization
-
-
+# --- Router Definitions ---
 try:
     from app.api.feedback import router as feedback_router
-    # Ensure FastAPI app exists before including routers/middleware
-    try:
-        app
-    except NameError:
-        # app not defined yet — nothing to do here, continue gracefully
-        pass
     app.include_router(feedback_router)
-except Exception:
-    pass
+except ImportError as e:
+    print(f"[WARNING] Feedback router failed to import: {e}")
+
 try:
     from app.api.routes import router as api_router
-    # Mount under /api to avoid path collisions with native /memory endpoints
-    try:
-        app
-    except NameError:
-        # app not defined yet — nothing to do here, continue gracefully
-        pass
-    # Mount under /api to avoid path collisions with native /memory endpoints
+    # Mount under /api to avoid path collisions
     app.include_router(api_router, prefix="/api")
-except Exception:
-    pass
+except ImportError as e:
+    print(f"[ERROR] API router failed to import: {e}")
+    # In a real environment, we'd want to know why this failed
+    import traceback
+    traceback.print_exc()
 
 
 class PDFAnalyzeResponse(BaseModel):
