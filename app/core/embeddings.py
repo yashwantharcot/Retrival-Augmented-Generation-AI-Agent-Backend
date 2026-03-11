@@ -143,12 +143,10 @@ def get_embedding_for_text(text: str) -> List[float]:
 
 def validate_config():
     """Validate required configuration at startup."""
-    
     if not any([OPENAI_API_KEY, GOOGLE_API_KEY, HF_API_KEY]):
-        
-        raise RuntimeError("At least one embedding provider API key must be configured")
-    if not openai_client and "openai" in [p[0] for p in SEARCH_FALLBACKS]:
-        raise RuntimeError("OpenAI client required but not initialized")
+        print("[WARNING] No embedding provider API keys (OpenAI/Google/HF) configured. Embedding features will fail.")
+    if not client and "openai" in [p[0] for p in SEARCH_FALLBACKS]:
+        print("[WARNING] OpenAI client required but not initialized (missing API key).")
         
 
 # Initialize configuration
