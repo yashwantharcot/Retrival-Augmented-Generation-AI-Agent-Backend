@@ -83,7 +83,7 @@ E5_DISABLED_REASON = (
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 google_client = None
 if genai and GOOGLE_API_KEY:
-    google_client = genai.Client(api_key=GOOGLE_API_KEY, http_options={"api_version": "v1"})
+    google_client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # MongoDB Client with connection pooling (optional)
 mongo_client = None
@@ -285,7 +285,11 @@ def get_query_embedding(query: str) -> List[float]:
     
     last_error = None
     import traceback
-    providers = [("openai", EMBEDDING_MODEL), ("gemini", "text-embedding-004")]
+    providers = [
+        ("openai", EMBEDDING_MODEL), 
+        ("gemini", "text-embedding-004"),
+        ("gemini", "gemini-embedding-001")
+    ]
     if not E5_EFFECTIVE_DISABLED:
         providers.append(("intfloat", E5_MODEL_NAME))
     for provider, model in providers:

@@ -29,7 +29,8 @@ HF_API_KEY = os.getenv("HF_API_KEY")  # HuggingFace access token
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 google_client = None
 if genai and GOOGLE_API_KEY:
-    google_client = genai.Client(api_key=GOOGLE_API_KEY, http_options={"api_version": "v1"})
+    # Use default (v1beta) for broader model support including legacy aliases
+    google_client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # ===== TOKENIZER =====
 _encoding_cache = None
@@ -54,6 +55,7 @@ SEARCH_FALLBACKS = (
     [("openai", EMBEDDING_MODEL)] if USE_OPENAI else []
 ) + [
     ("gemini", "text-embedding-004"),
+    ("gemini", "gemini-embedding-001"),
 ]
 # ===== STATE =====
 openai_lock = Lock()
