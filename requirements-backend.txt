@@ -13,6 +13,3 @@ tenacity
 groq
 PyMuPDF
 pdfplumber
-sentence-transformers
-faiss-cpu
-torch

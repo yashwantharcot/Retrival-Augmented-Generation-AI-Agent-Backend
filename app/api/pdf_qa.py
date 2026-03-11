@@ -1,16 +1,18 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import tempfile
 import os
+import numpy as np
 from uuid import uuid4
 
-from app.core.local_models import embed_texts, build_faiss_index, search_faiss, generate_answer
+from app.core.embeddings import get_query_embedding
+from app.core.llm import llm_engine
 from pdf_synopsis.pdf_vector_pipeline import extract_pdf_text
 
 router = APIRouter()
 
-# Simple in-memory store for sessions: session_id -> {chunks, embeddings, index, arr}
+# Simple in-memory store for sessions: session_id -> {chunks, embeddings}
 pdf_sessions = {}
 
 
@@ -24,6 +26,18 @@ def chunk_text_simple(text: str, chunk_size_chars: int = 1200, overlap: int = 20
         chunks.append(chunk.strip())
         start = end - overlap if end < length else end
     return [c for c in chunks if c]
+
+
+def _cosine_similarity(a: List[float], b: List[float]) -> float:
+    """Compute cosine similarity between two vectors."""
+    a_arr = np.array(a, dtype=np.float32)
+    b_arr = np.array(b, dtype=np.float32)
+    dot = np.dot(a_arr, b_arr)
+    norm_a = np.linalg.norm(a_arr)
+    norm_b = np.linalg.norm(b_arr)
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return float(dot / (norm_a * norm_b))
 
 
 class UploadResponse(BaseModel):
@@ -53,18 +67,25 @@ async def upload_pdf(file: UploadFile = File(...), session_id: Optional[str] = F
     if not chunks:
         raise HTTPException(status_code=400, detail="No text extracted from PDF")
 
-    # Compute embeddings and build FAISS
-    embeddings = embed_texts(chunks)
-    index, arr = build_faiss_index(embeddings)
+    # Compute embeddings using cloud provider (Gemini/OpenAI)
+    embeddings = []
+    for chunk in chunks:
+        try:
+            emb = get_query_embedding(chunk)
+            embeddings.append(emb)
+        except Exception as e:
+            print(f"[WARNING] Failed to embed chunk: {e}")
+            continue
+
+    if not embeddings:
+        raise HTTPException(status_code=500, detail="Failed to generate embeddings for PDF chunks")
 
     pdf_sessions[sid] = {
-        'chunks': chunks,
+        'chunks': chunks[:len(embeddings)],  # align chunks with successful embeddings
         'embeddings': embeddings,
-        'index': index,
-        'arr': arr
     }
 
-    return UploadResponse(session_id=sid, chunks=len(chunks))
+    return UploadResponse(session_id=sid, chunks=len(embeddings))
 
 
 class QueryRequest(BaseModel):
@@ -79,16 +100,25 @@ def query_pdf(req: QueryRequest):
     if not session:
         raise HTTPException(status_code=404, detail='Session not found')
 
-    q_emb = embed_texts([req.query])[0]
-    ids, dists = search_faiss(session['index'], session['arr'], q_emb, top_k=req.top_k)
+    # Get query embedding using same cloud provider
+    q_emb = get_query_embedding(req.query)
+
+    # Find top_k most similar chunks using cosine similarity
+    similarities = []
+    for i, emb in enumerate(session['embeddings']):
+        sim = _cosine_similarity(q_emb, emb)
+        similarities.append((i, sim))
+
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    top_results = similarities[:req.top_k]
 
     # Build context from retrieved chunks
     context_blocks = []
     sources = []
-    for idx in ids:
+    for idx, score in top_results:
         try:
-            context_blocks.append(session['chunks'][int(idx)])
-            sources.append({'idx': int(idx)})
+            context_blocks.append(session['chunks'][idx])
+            sources.append({'idx': idx, 'score': round(score, 4)})
         except Exception:
             pass
 
@@ -97,7 +127,8 @@ def query_pdf(req: QueryRequest):
         prompt += f"Excerpt {i+1}: {cb}\n\n"
     prompt += f"Question: {req.query}\nAnswer concisely and cite which excerpt you used (e.g., Excerpt 1)."
 
-    answer = generate_answer(prompt)
+    # Use existing cloud LLM engine instead of local flan-t5
+    answer = llm_engine.chat(prompt)
 
     return {
         'answer': answer,
