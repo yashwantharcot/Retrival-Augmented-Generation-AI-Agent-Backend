@@ -4,3 +4,4 @@ pydantic
 python-multipart
 requests
 numpy
+openai
