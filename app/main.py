@@ -89,6 +89,14 @@ from uuid import uuid4
 # Create FastAPI app early so middleware and routers can reference it
 app = FastAPI(title="DealdoxAgent API")
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+
+@app.get("/")
+def read_root():
+    return {"message": "DealdoxAgent API is running"}
+
 from fastapi import Body
 from pydantic import BaseModel
 from typing import Optional

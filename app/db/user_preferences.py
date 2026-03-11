@@ -5,9 +5,16 @@ from pymongo import MongoClient
 from functools import lru_cache
 
 _mongo_uri = os.getenv("MONGODB_URI")
-_client = MongoClient(_mongo_uri)
-_db = _client[os.getenv("MONGODB_DB", "dev_db")]
-_collection = _db["user_preferences"]
+_client = None
+_db = None
+_collection = None
+
+try:
+    _client = MongoClient(_mongo_uri, serverSelectionTimeoutMS=5000)
+    _db = _client[os.getenv("MONGODB_DB", "dev_db")]
+    _collection = _db["user_preferences"]
+except Exception as e:
+    print(f"[WARNING] MongoDB connection failed in db/user_preferences.py: {e}")
 
 
 _CACHE_TTL_SECONDS = int(os.getenv("USER_PREF_CACHE_TTL", "300"))

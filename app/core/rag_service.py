@@ -16,8 +16,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MONGO_URI = os.getenv("MONGODB_URI")
-client = MongoClient(MONGO_URI)
-db = client["dev_db"]    # <-- database name you want to use
+client = None
+db = None
+
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    db = client["dev_db"]    # <-- database name you want to use
+except Exception as e:
+    print(f"[WARNING] MongoDB connection failed in core/rag_service.py: {e}")
  
 llm = OpenAIEngine()
 def extract_entities(query: str) -> dict:
@@ -53,12 +59,16 @@ def extract_entities(query: str) -> dict:
     return {k: v for k, v in entities.items() if v} # Empty metadata for now, you can simulate test metadata if needed
 
 #  CORRECT Retriever initialization
-retriever = Retriever(
-    openai_collection=db["dd_accounts_chunks"],
-    gemini_collection=db["dd_accounts_chunks_gemini"],
-    openai_index="vector_index_v2",
-    gemini_index="vector_index_gemini_v2"
-)
+if db is not None:
+    retriever = Retriever(
+        openai_collection=db["dd_accounts_chunks"],
+        gemini_collection=db["dd_accounts_chunks_gemini"],
+        openai_index="vector_index_v2",
+        gemini_index="vector_index_gemini_v2"
+    )
+else:
+    retriever = None
+    print("[WARNING] Retriever not initialized due to missing MongoDB connection.")
 
  # <- This wraps GPT coref logic
 

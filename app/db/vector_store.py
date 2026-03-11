@@ -10,9 +10,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Initialize MongoDB client
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-collection = db[TARGET_COLLECTION]
+client = None
+db = None
+collection = None
+
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    db = client[DB_NAME]
+    collection = db[TARGET_COLLECTION]
+except Exception as e:
+    print(f"[WARNING] MongoDB connection failed in db/vector_store.py: {e}")
+    # collection is now None; search_similar_documents will need additional guards or will fail gracefully
 '''
 def search_similar_documents(query_vector, k=20, metadata_filter: dict = None):
     """

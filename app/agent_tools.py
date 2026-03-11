@@ -5,9 +5,17 @@ Provides db_query and structured_search functions for specialized retrieval.
 
 from pymongo import MongoClient
 
-MONGO_URI = "<your-mongo-uri>"  # Replace with your actual URI or use env
-client = MongoClient(MONGO_URI)
-db = client["dev_db"]
+from app.config import MONGO_URI
+
+# Initialize MongoDB client
+client = None
+db = None
+
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    db = client["dev_db"]
+except Exception as e:
+    print(f"[WARNING] MongoDB connection failed in agent_tools.py: {e}")
 
 # Tool: DB Query
 

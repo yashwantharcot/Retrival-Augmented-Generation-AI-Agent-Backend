@@ -5,14 +5,19 @@ from datetime import datetime
 import uuid
 
 # MongoDB connection details (use your secure URI or load from env)
-MONGO_URI = "MONGODB_URI"  # Replace with actual value or import from config
-DB_NAME = "dev_db"
-MEMORY_COLLECTION = "dd_memory_entries_rag"
+from app.config import MONGO_URI, DB_NAME, TARGET_COLLECTION as MEMORY_COLLECTION
 
 # === Setup Client ===
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-memory_collection = db[MEMORY_COLLECTION]
+client = None
+db = None
+memory_collection = None
+
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    db = client[DB_NAME]
+    memory_collection = db[MEMORY_COLLECTION]
+except Exception as e:
+    print(f"[WARNING] MongoDB connection failed in db/rag_db.py: {e}")
 
 
 

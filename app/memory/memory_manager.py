@@ -5,9 +5,16 @@ from app.memory.memory_entry import MemoryEntry
 from app.config import MONGO_URI
 
 # Initialize MongoDB client
-client = MongoClient(MONGO_URI)
-db = client["dev_db"]
-memory_collection = db["dd_memory_entries_rag"]
+client = None
+db = None
+memory_collection = None
+
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    db = client["dev_db"]
+    memory_collection = db["dd_memory_entries_rag"]
+except Exception as e:
+    print(f"[WARNING] MongoDB connection failed in memory/memory_manager.py: {e}")
 
 # In app/memory/memory_manager.py
 

@@ -17,7 +17,7 @@ if uploaded_file is not None:
     if st.button("Process PDF"):
         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
         try:
-            resp = requests.post(f"{BACKEND_URL}/upload_pdf", files=files)
+            resp = requests.post(f"{BACKEND_URL}/api/pdf-qa/upload_pdf", files=files)
         except Exception as e:
             st.error(f"Upload failed: {e}")
             raise
@@ -54,7 +54,7 @@ if st.button("Get Answer"):
             "top_k": top_k
         }
         try:
-            resp = requests.post(f"{BACKEND_URL}/query", json=payload)
+            resp = requests.post(f"{BACKEND_URL}/api/pdf-qa/query", json=payload)
         except Exception as e:
             st.error(f"Query failed: {e}")
             raise

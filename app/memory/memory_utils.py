@@ -30,8 +30,13 @@ from datetime import datetime
 from pymongo import MongoClient
 from app.config import MONGO_URI
 
-client = MongoClient(MONGO_URI)
-memory_collection = client["dev_db"]["dd_memory_entries_rag"]
+client = None
+memory_collection = None
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    memory_collection = client["dev_db"]["dd_memory_entries_rag"]
+except Exception as e:
+    print(f"[WARNING] MongoDB connection failed in memory/memory_utils.py: {e}")
 
 
 
