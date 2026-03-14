@@ -87,7 +87,7 @@ import openai
 from uuid import uuid4
 
 # Create FastAPI app early so middleware and routers can reference it
-app = FastAPI(title="DealdoxAgent API")
+app = FastAPI(title="Retrieval Augmented Generation API")
 
 @app.get("/health")
 def health_check():
